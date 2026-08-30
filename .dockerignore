@@ -1,0 +1,6 @@
+.env
+*.tar.gz
+deploy-guide.html
+README.md
+.git
+.gitignore

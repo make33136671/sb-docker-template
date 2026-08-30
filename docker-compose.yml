@@ -1,0 +1,32 @@
+name: ${PROJECT_NAME:-myapp}
+
+services:
+  app:
+    build:
+      context: .
+      network: host
+    restart: unless-stopped
+    ports:
+      - "${USER_PORT:-8080}:8080"
+      - "${ADMIN_PORT:-8081}:8081"
+      - "${API_PORT:-8082}:8082"
+    environment:
+      - PROJECT_NAME=${PROJECT_NAME:-myapp}
+      - APP_DLL_NAME=${APP_DLL_NAME:-MyApp.WebApi.dll}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-sb_myapp}
+    volumes:
+      - ${POSTGRES_DATA_PATH:-pg_data}:/var/lib/postgresql/data
+      - ${REDIS_DATA_PATH:-redis_data}:/var/lib/redis
+      - dp_keys:/root/.aspnet/DataProtection-Keys
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  pg_data:
+  redis_data:
+  dp_keys:
