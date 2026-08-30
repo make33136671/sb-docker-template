@@ -2,5 +2,6 @@
 *.tar.gz
 deploy-guide.html
 README.md
+部署教程.html
 .git
 .gitignore
