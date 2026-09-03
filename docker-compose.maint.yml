@@ -1,0 +1,19 @@
+# ═══════════════════════════════════════════════════════════
+#  维护模式 overlay —— 与主文件叠加使用，不单独使用
+#
+#  启动维护容器（生产镜像 + unzip/wget/vim 等工具 + /app 映射到宿主机）:
+#    docker compose -f docker-compose.yml -f docker-compose.maint.yml up -d --build
+#
+#  排障完退回生产:
+#    docker compose -f docker-compose.yml -f docker-compose.maint.yml down
+#    docker compose up -d
+#
+#  注意: /app 挂载会遮蔽镜像内产物, 首次启动 entrypoint 自动从镜像播种;
+#        与生产共用同一套 pg_data/redis_data 卷, 改的是真实数据, 排障请谨慎
+# ═══════════════════════════════════════════════════════════
+services:
+  app:
+    build:
+      target: maint
+    volumes:
+      - ${APP_SRC_PATH:-./app}:/app

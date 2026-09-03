@@ -24,7 +24,9 @@ docker compose down
 
 echo ""
 echo "→ 重新构建镜像..."
-docker compose build --no-cache
+# 不用 --no-cache: 基座层(apt)三层共享缓存, --no-cache 会连系统组件一起重建(数分钟);
+# 产物变化时 COPY 层缓存自然失效, 只有确需重装系统组件时才手动加 --no-cache
+docker compose build
 
 echo ""
 echo "→ 启动容器..."

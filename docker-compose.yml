@@ -5,6 +5,7 @@ services:
     build:
       context: .
       network: host
+      target: prod
     restart: unless-stopped
     ports:
       - "${USER_PORT:-8080}:8080"

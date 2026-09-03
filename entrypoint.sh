@@ -41,4 +41,8 @@ else
 fi
 
 echo "→ Starting all services (nginx + postgres + redis + api)..."
+
+# 维护镜像专用：/app 被宿主机目录遮蔽时从镜像内种子播种（生产镜像无 /opt/app-seed，此行空转）
+[ -d /opt/app-seed ] && /usr/local/bin/bootstrap-app.sh
+
 exec supervisord -n -c /etc/supervisor/supervisord.conf
