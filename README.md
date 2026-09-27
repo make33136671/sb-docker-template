@@ -8,7 +8,7 @@
 
 ```bash
 cp -r sb/sb-docker-template apps/myapp/myapp-docker
-cd apps/myapp/myapp-docker
+cd apps/myapp-docker
 ```
 
 ### 2. 放入编译产物
@@ -19,14 +19,26 @@ cd apps/myapp/myapp-docker
 | `user-ui/html/` | 用户端前端构建产物 | `cd user && pnpm build` → 复制 `dist/` 内容 |
 | `api/app/` | .NET API 发布产物 | `dotnet publish -c Release -o api/app` |
 
-### 3. 修改项目配置
+### 3. 定制部署教程
 
-编辑 `.env`（由 deploy.sh 自动生成，或手动修改 `.env.example`）：
+`部署教程.html` 是通用模板，包含 `{{占位符}}`，发布前请替换为项目实际值：
 
-```bash
-PROJECT_NAME=myapp          # 项目名（影响容器名、数据库名、Redis前缀）
-APP_DLL_NAME=MyApp.WebApi.dll  # API DLL 文件名
-```
+| 占位符 | 说明 | 示例值 |
+|--------|------|--------|
+| `{{PROJECT_NAME}}` | 项目中文名 | TgVault |
+| `{{PROJECT_NAME_LOWER}}` | 项目英文名（小写） | tgvault |
+| `{{PACKAGE_NAME}}` | 部署包目录名 | sb-tgvault-docker |
+| `{{DB_TYPE}}` | 数据库类型 | PostgreSQL / MySQL |
+| `{{DB_PORT}}` | 数据库端口 | 5432 / 3306 |
+| `{{DB_USER}}` | 数据库用户 | postgres / root |
+| `{{DB_NAME}}` | 数据库名 | sb_tgvault |
+| `{{DB_ENV_DB}}` | 环境变量名 | POSTGRES_DB / MYSQL_DATABASE |
+| `{{DB_ENV_PWD}}` | 环境变量名 | POSTGRES_PASSWORD / MYSQL_ROOT_PASSWORD |
+| `{{DB_DATA_PATH_VAR}}` | 数据路径变量 | POSTGRES_DATA_PATH / MYSQL_DATA_PATH |
+| `{{DB_DIR}}` | 数据目录名 | postgres / mysql |
+| `{{USER_PORT}}` | 用户端端口 | 8080 |
+| `{{ADMIN_PORT}}` | 管理端端口 | 8081 |
+| `{{API_PORT}}` | API 端口 | 8082 |
 
 ### 4. 一键部署
 
@@ -34,7 +46,18 @@ APP_DLL_NAME=MyApp.WebApi.dll  # API DLL 文件名
 bash deploy.sh
 ```
 
-## 目录结构
+## 打包发布规范
+
+所有派生项目的 Docker 部署包必须遵循以下规范：
+
+### 打包命令
+
+```bash
+# 在项目根目录执行，打包成 tar.gz
+tar -czf myapp-docker.tar.gz myapp-docker/
+```
+
+### 部署包结构
 
 ```
 myapp-docker/
@@ -42,7 +65,8 @@ myapp-docker/
 ├── docker-compose.yml      # 编排配置
 ├── deploy.sh               # 首次部署脚本（生成 .env + 构建启动）
 ├── redeploy.sh             # 重新部署脚本（更新代码后使用）
-├── entrypoint.sh           # 容器入口（PostgreSQL 初始化 + 密码同步）
+├── entrypoint.sh           # 容器入口（数据库初始化 + 密码同步）
+├── 部署教程.html           # ⚠ 部署教程（必须包含，面向最终用户）
 ├── .env.example            # 配置参考（实际 .env 由 deploy.sh 生成）
 ├── .dockerignore
 ├── nginx/
@@ -53,11 +77,18 @@ myapp-docker/
 ├── redis/
 │   └── redis.conf          # Redis 配置
 ├── scripts/
-│   └── start-api.sh       # API 启动脚本（等 PG/Redis 就绪后启动）
-├── admin-ui/html/          # ← 放入 Admin 前端构建产物
-├── user-ui/html/           # ← 放入用户端前端构建产物
-└── api/app/                # ← 放入 .NET API 发布产物
+│   └── start-api.sh        # API 启动脚本（等 DB/Redis 就绪后启动）
+├── admin-ui/html/          # ← Admin 前端构建产物
+├── user-ui/html/           # ← 用户端前端构建产物
+└── api/app/                # ← .NET API 发布产物
 ```
+
+### 必含项清单
+
+- [ ] `部署教程.html` — 面向运维人员的完整图文教程，替换所有 `{{占位符}}`
+- [ ] `deploy.sh` — 首次一键部署，自动生成 `.env` 和随机密码
+- [ ] `redeploy.sh` — 更新版本用，保留 `.env` 不丢失数据
+- [ ] 编译产物全部就位（admin-ui、user-ui、api）
 
 ## 端口说明
 
@@ -66,28 +97,6 @@ myapp-docker/
 | 8080 | user-ui + API | 用户端 |
 | 8081 | admin-ui + API | 管理端 |
 | 8082 | API 直通 | API 直连 |
-
-## 域名配置
-
-在宿主机 Nginx 配置子域名转发到 Docker 容器：
-
-```nginx
-# admin.example.com → 管理端
-server {
-    listen 80;
-    server_name admin.example.com;
-    location / { proxy_pass http://127.0.0.1:8081; }
-}
-
-# example.com / www.example.com → 用户端
-server {
-    listen 80;
-    server_name example.com www.example.com;
-    location / { proxy_pass http://127.0.0.1:8080; }
-}
-```
-
-SSL 在宿主机或 CDN 层处理，容器不关心证书。
 
 ## 三层镜像与维护模式
 

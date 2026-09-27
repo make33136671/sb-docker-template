@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SB Framework Docker 部署教程</title>
+<title>{{PROJECT_NAME}} Docker 部署教程</title>
 <style>
   :root {
     --primary: #1677ff;
@@ -147,7 +147,7 @@
 <body>
 
 <div class="header">
-  <h1>SB Framework Docker 部署教程</h1>
+  <h1>{{PROJECT_NAME}} Docker 部署教程</h1>
   <p>单容器部署 · 使用 deploy.sh 一键部署 · 无需手动编辑配置文件</p>
 </div>
 
@@ -158,38 +158,11 @@
     <h2>前提条件</h2>
     <ul>
       <li>服务器已安装 <strong>Docker</strong> 和 <strong>Docker Compose</strong></li>
-      <li>服务器开放端口 <code>8080</code>（用户端）、<code>8081</code>（管理端）、<code>8082</code>（API）</li>
+      <li>服务器开放端口 <code>{{USER_PORT}}</code>（用户端）、<code>{{ADMIN_PORT}}</code>（管理端）、<code>{{API_PORT}}</code>（API）</li>
       <li>如需使用域名：宿主机已安装 Nginx 并配置好域名解析和 SSL 证书</li>
     </ul>
     <div class="note note-warning">
-      <span class="note-icon">!</span> 如果服务器 80 端口已被宿主机 Nginx 占用，Docker 容器使用 8080/8081/8082 端口，由宿主机 Nginx 反代到这些端口。
-    </div>
-  </div>
-
-  <!-- 准备编译产物 -->
-  <div class="card">
-    <h2><span class="step-badge">0</span>准备编译产物</h2>
-    <p>部署前需要将以下编译产物放入部署包对应目录：</p>
-    <table class="port-table">
-      <tr><th>目录</th><th>内容</th><th>构建命令示例</th></tr>
-      <tr>
-        <td><code>admin-ui/html/</code></td>
-        <td>Admin 前端构建产物</td>
-        <td><code>pnpm build</code> → 复制 <code>dist/</code> 内容</td>
-      </tr>
-      <tr>
-        <td><code>user-ui/html/</code></td>
-        <td>用户端前端构建产物</td>
-        <td><code>pnpm build</code> → 复制 <code>dist/</code> 内容</td>
-      </tr>
-      <tr>
-        <td><code>api/app/</code></td>
-        <td>.NET API 发布产物</td>
-        <td><code>dotnet publish -c Release -o api/app</code></td>
-      </tr>
-    </table>
-    <div class="note">
-      <span class="note-icon">i</span> 确保前端构建时 API 请求路径使用相对路径（<code>/admin/</code>、<code>/user/</code> 等），避免 CORS 问题。
+      <span class="note-icon">!</span> 如果服务器 80 端口已被宿主机 Nginx 占用，Docker 容器使用 {{USER_PORT}}/{{ADMIN_PORT}}/{{API_PORT}} 端口，由宿主机 Nginx 反代到这些端口。
     </div>
   </div>
 
@@ -198,23 +171,20 @@
     <h2><span class="step-badge">1</span>首次部署</h2>
     <p>将部署包上传到服务器后，执行以下命令：</p>
     <pre><code># 解压部署包
-tar -xzf myapp-docker.tar.gz
-cd myapp-docker
+tar -xzf {{PACKAGE_NAME}}.tar.gz
+cd {{PACKAGE_NAME}}
 
 # 一键部署（自动生成 .env 配置文件）
 bash deploy.sh</code></pre>
-    <p>首次运行 <code>deploy.sh</code> 会生成 <code>.env</code> 文件并提示你修改项目配置：</p>
-    <pre><code># 修改 .env 中的以下两项为你的项目实际值
-PROJECT_NAME=myapp              # 你的项目名
-APP_DLL_NAME=MyApp.WebApi.dll   # 你的 API DLL 文件名</code></pre>
-    <p>修改后再次运行 <code>bash deploy.sh</code>，它会自动完成：</p>
+    <p><code>deploy.sh</code> 会自动完成：</p>
     <ul>
-      <li>生成 24 位高强度 PostgreSQL 密码</li>
+      <li>生成 24 位高强度 {{DB_TYPE}} 密码</li>
+      <li>创建 <code>.env</code> 配置文件（含端口、数据库名、密码）</li>
       <li>构建 Docker 镜像（首次约 3~5 分钟）</li>
       <li>启动容器并等待服务就绪</li>
     </ul>
     <div class="note note-success">
-      <span class="note-icon">✓</span> 部署完成后，终端会显示 PostgreSQL 密码，请务必记录。密码也可在 <code>.env</code> 文件中查看。
+      <span class="note-icon">✓</span> 部署完成后，终端会显示 {{DB_TYPE}} 密码，请务必记录。密码也可在 <code>.env</code> 文件中查看。
     </div>
   </div>
 
@@ -223,11 +193,11 @@ APP_DLL_NAME=MyApp.WebApi.dll   # 你的 API DLL 文件名</code></pre>
     <h2><span class="step-badge">2</span>重新部署（更新版本）</h2>
     <p>当有新版本代码需要更新时，使用 <code>redeploy.sh</code> 一键重新部署：</p>
     <pre><code># 上传新的部署包并解压
-tar -xzf myapp-docker.tar.gz
-cd myapp-docker
+tar -xzf {{PACKAGE_NAME}}.tar.gz
+cd {{PACKAGE_NAME}}
 
 # 将旧 .env 复制过来（保留原有的数据库密码和配置）
-cp ../myapp-docker/.env . 2>/dev/null || true
+cp ../{{PACKAGE_NAME}}/.env . 2>/dev/null || true
 
 # 一键重新部署
 bash redeploy.sh</code></pre>
@@ -251,7 +221,7 @@ bash redeploy.sh</code></pre>
       <span class="note-icon">!! 警告</span>
       <p style="margin-top:8px;"><strong>此操作将永久删除所有数据，包括：</strong></p>
       <ul style="margin:4px 0 4px 20px;">
-        <li>PostgreSQL 数据库中的全部数据（管理员、业务数据等）</li>
+        <li>{{DB_TYPE}} 数据库中的全部数据（管理员、业务数据等）</li>
         <li>Redis 缓存数据</li>
         <li>Docker 命名卷中的所有持久化数据</li>
         <li>已安装的系统配置（installed.lock）</li>
@@ -262,22 +232,22 @@ bash redeploy.sh</code></pre>
 
     <p>确认已备份并需要彻底清除后，执行以下命令：</p>
     <pre><code># 1. 进入部署目录
-cd myapp-docker
+cd {{PACKAGE_NAME}}
 
 # 2. 停止并删除容器 + 所有数据卷
 docker compose down -v
 
 # 3. 删除旧镜像
-docker rmi $(docker images -q myapp-docker 2>/dev/null) 2>/dev/null
+docker rmi $(docker images -q {{PACKAGE_NAME}} 2>/dev/null) 2>/dev/null
 docker image prune -f
 
 # 4. 删除整个旧部署目录
 cd ..
-rm -rf myapp-docker
+rm -rf {{PACKAGE_NAME}}
 
-# 5. 上传新的 myapp-docker.tar.gz 并解压
-tar -xzf myapp-docker.tar.gz
-cd myapp-docker
+# 5. 上传新的 {{PACKAGE_NAME}}.tar.gz 并解压
+tar -xzf {{PACKAGE_NAME}}.tar.gz
+cd {{PACKAGE_NAME}}
 
 # 6. 全新部署
 bash deploy.sh</code></pre>
@@ -291,37 +261,32 @@ bash deploy.sh</code></pre>
     <h2>配置说明（.env 文件）</h2>
     <p>所有配置通过 <code>.env</code> 文件管理，<strong>不建议</strong>手动编辑 <code>docker-compose.yml</code> 或其他配置文件。</p>
     <p><code>.env</code> 文件由 <code>deploy.sh</code> 自动生成，内容如下：</p>
-    <pre><code># 项目名（影响容器名、数据库名、Redis前缀）
-PROJECT_NAME=myapp
-
-# API DLL 文件名（改为你的项目实际 DLL 名）
-APP_DLL_NAME=MyApp.WebApi.dll
+    <pre><code># 项目名称
+PROJECT_NAME={{PROJECT_NAME_LOWER}}
 
 # 对外端口（三端口分离）
-USER_PORT=8080
-ADMIN_PORT=8081
-API_PORT=8082
+USER_PORT={{USER_PORT}}
+ADMIN_PORT={{ADMIN_PORT}}
+API_PORT={{API_PORT}}
 
-# PostgreSQL（密码已自动生成）
-POSTGRES_DB=sb_myapp
-POSTGRES_PASSWORD=AutoGenerated24CharPassword
+# {{DB_TYPE}}（密码已自动生成）
+{{DB_ENV_DB}}={{DB_NAME}}
+{{DB_ENV_PWD}}=AutoGenerated24CharPassword
 
 # 数据持久化
 # 留空 = Docker 命名卷（内置）
 # 填路径 = 绑定挂载到宿主目录（外置）
-POSTGRES_DATA_PATH=
+{{DB_DATA_PATH_VAR}}=
 REDIS_DATA_PATH=</code></pre>
     <h3>可调整的配置项</h3>
     <table class="port-table">
       <tr><th>变量</th><th>默认值</th><th>说明</th></tr>
-      <tr><td><code>PROJECT_NAME</code></td><td>myapp</td><td>项目名（影响容器名、数据库名、Redis前缀）</td></tr>
-      <tr><td><code>APP_DLL_NAME</code></td><td>MyApp.WebApi.dll</td><td>API DLL 文件名</td></tr>
-      <tr><td><code>USER_PORT</code></td><td>8080</td><td>用户端对外端口</td></tr>
-      <tr><td><code>ADMIN_PORT</code></td><td>8081</td><td>管理端对外端口</td></tr>
-      <tr><td><code>API_PORT</code></td><td>8082</td><td>API 对外端口</td></tr>
-      <tr><td><code>POSTGRES_DB</code></td><td>sb_myapp</td><td>数据库名称</td></tr>
-      <tr><td><code>POSTGRES_PASSWORD</code></td><td>自动生成</td><td>数据库密码（勿修改）</td></tr>
-      <tr><td><code>POSTGRES_DATA_PATH</code></td><td>留空</td><td>填路径则数据外置到宿主目录</td></tr>
+      <tr><td><code>USER_PORT</code></td><td>{{USER_PORT}}</td><td>用户端对外端口</td></tr>
+      <tr><td><code>ADMIN_PORT</code></td><td>{{ADMIN_PORT}}</td><td>管理端对外端口</td></tr>
+      <tr><td><code>API_PORT</code></td><td>{{API_PORT}}</td><td>API 对外端口</td></tr>
+      <tr><td><code>{{DB_ENV_DB}}</code></td><td>{{DB_NAME}}</td><td>数据库名称</td></tr>
+      <tr><td><code>{{DB_ENV_PWD}}</code></td><td>自动生成</td><td>数据库密码（勿修改）</td></tr>
+      <tr><td><code>{{DB_DATA_PATH_VAR}}</code></td><td>留空</td><td>填路径则数据外置到宿主目录</td></tr>
       <tr><td><code>REDIS_DATA_PATH</code></td><td>留空</td><td>填路径则 Redis 数据外置到宿主目录</td></tr>
     </table>
   </div>
@@ -332,25 +297,25 @@ REDIS_DATA_PATH=</code></pre>
     <table class="port-table">
       <tr><th>端口</th><th>服务</th><th>容器内路径</th><th>说明</th></tr>
       <tr>
-        <td><span class="tag tag-green">8080</span></td>
+        <td><span class="tag tag-green">{{USER_PORT}}</span></td>
         <td>用户端 UI</td>
         <td><code>/app/user-ui</code></td>
         <td>面向终端用户的前端页面</td>
       </tr>
       <tr>
-        <td><span class="tag tag-blue">8081</span></td>
+        <td><span class="tag tag-blue">{{ADMIN_PORT}}</span></td>
         <td>管理端 UI</td>
         <td><code>/app/admin-ui</code></td>
         <td>后台管理界面 + 安装向导</td>
       </tr>
       <tr>
-        <td><span class="tag tag-orange">8082</span></td>
+        <td><span class="tag tag-orange">{{API_PORT}}</span></td>
         <td>API 服务</td>
         <td><code>/app/api</code></td>
         <td>.NET API 直通（SignalR + REST）</td>
       </tr>
     </table>
-    <p>容器内部还运行着 PostgreSQL 和 Redis，但不对外暴露端口，仅在容器内部通信。</p>
+    <p>容器内部还运行着 {{DB_TYPE}} 和 Redis，但不对外暴露端口，仅在容器内部通信。</p>
   </div>
 
   <!-- 域名配置 -->
@@ -368,7 +333,7 @@ server {
     ssl_certificate_key /path/to/key.pem;
 
     location / {
-        proxy_pass http://127.0.0.1:8081;
+        proxy_pass http://127.0.0.1:{{ADMIN_PORT}};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -385,7 +350,7 @@ server {
     ssl_certificate_key /path/to/key.pem;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:{{USER_PORT}};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -394,7 +359,7 @@ server {
 
     # API 代理
     location /api/ {
-        proxy_pass http://127.0.0.1:8082;
+        proxy_pass http://127.0.0.1:{{API_PORT}};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -417,10 +382,10 @@ server {
     <h3>Docker 部署模式（自动检测）</h3>
     <p>安装向导会自动检测 Docker 环境并预填以下默认值：</p>
     <ul>
-      <li><strong>数据库类型</strong>：PostgreSQL（MySQL 选项已隐藏）</li>
-      <li><strong>数据库地址</strong>：127.0.0.1:5432</li>
-      <li><strong>数据库名</strong>：deploy.sh 生成的值（如 <code>sb_myapp</code>）</li>
-      <li><strong>数据库用户</strong>：postgres</li>
+      <li><strong>数据库类型</strong>：{{DB_TYPE}}</li>
+      <li><strong>数据库地址</strong>：127.0.0.1:{{DB_PORT}}</li>
+      <li><strong>数据库名</strong>：deploy.sh 生成的值（如 <code>{{DB_NAME}}</code>）</li>
+      <li><strong>数据库用户</strong>：{{DB_USER}}</li>
       <li><strong>数据库密码</strong>：deploy.sh 自动生成的密码（已预填）</li>
       <li><strong>站点路径</strong>：<code>/app/admin-ui</code> 和 <code>/app/user-ui</code>（可修改）</li>
       <li><strong>API 路径</strong>：<code>/app/api</code>（自动探测）</li>
@@ -451,33 +416,33 @@ docker compose down
 docker compose up -d
 
 # 进入容器
-docker compose exec app bash
+docker compose exec {{PROJECT_NAME_LOWER}} bash
 
 # 查看容器内服务状态
-docker compose exec app supervisorctl status
+docker compose exec {{PROJECT_NAME_LOWER}} supervisorctl status
 
 # 查看数据库密码
-grep POSTGRES_PASSWORD .env</code></pre>
+grep {{DB_ENV_PWD}} .env</code></pre>
   </div>
 
   <!-- 常见问题 -->
   <div class="card">
     <h2>常见问题</h2>
 
-    <h3>Q: 端口 8080/8081/8082 被占用怎么办？</h3>
+    <h3>Q: 端口 {{USER_PORT}}/{{ADMIN_PORT}}/{{API_PORT}} 被占用怎么办？</h3>
     <p>编辑 <code>.env</code> 文件修改对应端口号，然后运行 <code>docker compose up -d</code> 重启。</p>
 
     <h3>Q: 忘记数据库密码怎么办？</h3>
-    <p>在部署目录运行 <code>grep POSTGRES_PASSWORD .env</code> 即可查看。密码在首次部署时由 deploy.sh 自动生成。</p>
+    <p>在部署目录运行 <code>grep {{DB_ENV_PWD}} .env</code> 即可查看。密码在首次部署时由 deploy.sh 自动生成。</p>
 
     <h3>Q: 如何将数据外置到宿主机？</h3>
-    <p>编辑 <code>.env</code>，设置 <code>POSTGRES_DATA_PATH=./data/postgres</code> 和 <code>REDIS_DATA_PATH=./data/redis</code>，然后 <code>docker compose up -d</code>。</p>
+    <p>编辑 <code>.env</code>，设置 <code>{{DB_DATA_PATH_VAR}}=./data/{{DB_DIR}}</code> 和 <code>REDIS_DATA_PATH=./data/redis</code>，然后 <code>docker compose up -d</code>。</p>
 
     <h3>Q: 重新部署后数据会丢失吗？</h3>
-    <p>不会。只要 <code>.env</code> 中的 <code>POSTGRES_PASSWORD</code> 和 <code>POSTGRES_DB</code> 与首次部署一致，Docker 命名卷会保留数据。<code>redeploy.sh</code> 会自动复用 <code>.env</code>。</p>
+    <p>不会。只要 <code>.env</code> 中的 <code>{{DB_ENV_PWD}}</code> 和 <code>{{DB_ENV_DB}}</code> 与首次部署一致，Docker 命名卷会保留数据。<code>redeploy.sh</code> 会自动复用 <code>.env</code>。</p>
 
     <h3>Q: 安装向导页面打不开？</h3>
-    <p>检查容器是否正常运行（<code>docker compose ps</code>），以及 Nginx 是否正确代理到 8081 端口。等待约 15 秒让所有服务启动。</p>
+    <p>检查容器是否正常运行（<code>docker compose ps</code>），以及 Nginx 是否正确代理到 {{ADMIN_PORT}} 端口。等待约 15 秒让所有服务启动。</p>
   </div>
 
 </div>
